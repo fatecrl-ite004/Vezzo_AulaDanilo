@@ -78,7 +78,7 @@ A documentação detalhada está organizada em [docs/wiki](docs/wiki/):
 - [Diagrama de classes](docs/wiki/Diagrama-de-Classes.md)
 - [Protótipo e funcionalidades](docs/wiki/Prototipo-e-Funcionalidades.md)
 
-As imagens dos diagramas extraídos do documento Vezzo_cap2.pdf devem ficar em `docs/imagens/`. O pacote de imagens acompanha a documentação para inclusão nessa pasta.
+As imagens dos diagramas extraídos do documento Vezzo_cap2.pdf devem ser adicionadas à pasta `docs/imagens/`. Os arquivos de documentação utilizam essa localização para exibir as figuras.
 
 ## Organização do desenvolvimento
 
