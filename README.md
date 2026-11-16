@@ -65,18 +65,20 @@ A plataforma prevê recursos para aproveitar horários liberados por cancelament
 | Prototipação e design de interface | Figma |
 | Controle de versão e hospedagem do código | Git e GitHub |
 
-## Documentação
+## Documentação do projeto
 
-A documentação do projeto contempla:
+A documentação detalhada está organizada em [docs/wiki](docs/wiki/):
 
-- Fluxos de usuários.
-- Diagramas de casos de uso.
-- Fluxos de eventos e diagramas de atividades.
-- Modelo Entidade-Relacionamento (MER).
-- Estrutura e descrição das tabelas do banco de dados.
-- Diagrama de classes, a ser documentado nesta etapa.
+- [Visão geral](docs/wiki/Home.md)
+- [Fluxo de usuários](docs/wiki/Fluxo-de-Usuarios.md)
+- [Diagramas de casos de uso](docs/wiki/Casos-de-Uso.md)
+- [Fluxos de eventos e diagramas de atividades](docs/wiki/Fluxo-de-Eventos.md)
+- [Banco de dados e MER](docs/wiki/Banco-de-Dados-MER.md)
+- [Tecnologias e arquitetura](docs/wiki/Tecnologias-e-Arquitetura.md)
+- [Diagrama de classes](docs/wiki/Diagrama-de-Classes.md)
+- [Protótipo e funcionalidades](docs/wiki/Prototipo-e-Funcionalidades.md)
 
-**Wiki do projeto:** [Acessar a Wiki do Vezzo](https://github.com/fatecrl-ite004/Vezzo_AulaDanilo/wiki)
+As imagens dos diagramas extraídos do documento Vezzo_cap2.pdf devem ficar em `docs/imagens/`. O pacote de imagens acompanha a documentação para inclusão nessa pasta.
 
 ## Organização do desenvolvimento
 
