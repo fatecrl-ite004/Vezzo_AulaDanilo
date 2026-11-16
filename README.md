@@ -69,17 +69,6 @@ A plataforma prevê recursos para aproveitar horários liberados por cancelament
 
 A documentação detalhada está organizada em [docs/wiki](docs/wiki/):
 
-- [Visão geral](docs/wiki/Home.md)
-- [Fluxo de usuários](docs/wiki/Fluxo-de-Usuarios.md)
-- [Diagramas de casos de uso](docs/wiki/Casos-de-Uso.md)
-- [Fluxos de eventos e diagramas de atividades](docs/wiki/Fluxo-de-Eventos.md)
-- [Banco de dados e MER](docs/wiki/Banco-de-Dados-MER.md)
-- [Tecnologias e arquitetura](docs/wiki/Tecnologias-e-Arquitetura.md)
-- [Diagrama de classes](docs/wiki/Diagrama-de-Classes.md)
-- [Protótipo e funcionalidades](docs/wiki/Prototipo-e-Funcionalidades.md)
-
-As imagens dos diagramas extraídos do documento Vezzo_cap2.pdf devem ser adicionadas à pasta `docs/imagens/`. Os arquivos de documentação utilizam essa localização para exibir as figuras.
-
 ## Organização do desenvolvimento
 
 O Vezzo está sendo desenvolvido como um Produto Mínimo Viável (MVP). As funcionalidades descritas neste README representam o escopo e os requisitos documentados do projeto; a disponibilidade de cada recurso deve ser conferida na versão atual da aplicação.
