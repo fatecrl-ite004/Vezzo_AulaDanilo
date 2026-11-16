@@ -1,82 +1,64 @@
 # Fluxos de eventos e diagramas de atividades
 
-O fluxo de eventos descreve a sequência de ações entre os atores e o sistema em cada funcionalidade. No TCC, os fluxos são representados por diagramas de atividades UML com raias (*swimlanes*).
+O fluxo de eventos descreve a sequência de ações entre os atores e o sistema em cada funcionalidade. O TCC apresenta diagramas de atividades UML com raias (*swimlanes*).
 
-## Legenda dos diagramas
-
+## Legenda
 - Azul: ações do paciente ou usuário.
 - Verde: ações do profissional.
 - Laranja: ações automáticas do sistema.
 - Losangos: decisões.
-- Círculo preenchido: início do fluxo.
-- Círculo duplo: fim do fluxo.
+- Círculo preenchido: início; círculo duplo: fim.
 
-## Diagramas principais
+## Diagramas de atividades
 
 ### UC01 — Cadastro de usuários (Figura 13)
-
-![Figura 13 — Cadastro](../imagens/figura-13-atividade-cadastro.png)
+![Figura 13](../imagens/figura-13.jpg)
 
 ### UC02 — Login (Figura 14)
-
-![Figura 14 — Login](../imagens/figura-14-atividade-login.png)
+![Figura 14](../imagens/figura-14.jpg)
 
 ### UC03 — Recuperação de senha (Figura 15)
-
-![Figura 15 — Recuperação de senha](../imagens/figura-15-atividade-recuperacao-senha.png)
+![Figura 15](../imagens/figura-15.jpg)
 
 ### UC04 — Busca de profissionais e agendamento (Figura 16)
-
-![Figura 16 — Busca e agendamento](../imagens/figura-16-atividade-busca-agendamento.png)
+![Figura 16](../imagens/figura-16.jpg)
 
 ### UC05 — Cancelamento de consulta (Figura 17)
-
-![Figura 17 — Cancelamento](../imagens/figura-17-atividade-cancelamento.png)
+![Figura 17](../imagens/figura-17.jpg)
 
 ### UC06 — Remarcação de consulta (Figura 18)
-
-![Figura 18 — Remarcação](../imagens/figura-18-atividade-remarcacao.png)
+![Figura 18](../imagens/figura-18.jpg)
 
 ### UC07 — Lista de espera (Figura 19)
-
-![Figura 19 — Lista de espera](../imagens/figura-19-atividade-lista-espera.png)
+![Figura 19](../imagens/figura-19.jpg)
 
 ### UC08 — Antecipação de consulta por encaixe (Figura 20)
-
-![Figura 20 — Antecipação por encaixe](../imagens/figura-20-atividade-encaixe.png)
+![Figura 20](../imagens/figura-20.jpg)
 
 ### UC09 — Gerenciamento da agenda profissional (Figura 21)
+![Figura 21](../imagens/figura-21.jpg)
 
-![Figura 21 — Gerenciamento da agenda](../imagens/figura-21-atividade-agenda-profissional.png)
-
-### UC10 — Confirmação da reserva (Figura 22)
-
-![Figura 22 — Confirmação da reserva](../imagens/figura-22-atividade-confirmacao-reserva.png)
+### UC11 — Confirmação da reserva (Figura 22)
+![Figura 22](../imagens/figura-22.jpg)
 
 ### UC12 — Registro do atendimento (Figura 23)
-
-![Figura 23 — Registro do atendimento](../imagens/figura-23-atividade-registro-atendimento.png)
+![Figura 23](../imagens/figura-23.jpg)
 
 ## Diagramas complementares
 
 ### Agendas particulares e por convênio (Figura 24)
-
-![Figura 24 — Agendas particulares e por convênio](../imagens/figura-24-atividade-agendas.png)
+![Figura 24](../imagens/figura-24.jpg)
 
 ### Configuração de lembretes (Figura 25)
-
-![Figura 25 — Configuração de lembretes](../imagens/figura-25-atividade-configuracao-lembretes.png)
+![Figura 25](../imagens/figura-25.jpg)
 
 ### Configuração de prazos (Figura 26)
-
-![Figura 26 — Configuração de prazos](../imagens/figura-26-atividade-configuracao-prazos.png)
+![Figura 26](../imagens/figura-26.jpg)
 
 ### Lembretes automáticos da consulta (Figura 27)
-
-![Figura 27 — Lembretes automáticos](../imagens/figura-27-atividade-lembretes-automaticos.png)
+![Figura 27](../imagens/figura-27.jpg)
 
 ### Notificações de eventos (Figura 28)
+![Figura 28](../imagens/figura-28.jpg)
 
-![Figura 28 — Notificações de eventos](../imagens/figura-28-atividade-notificacoes.png)
-
-> O documento apresenta os fluxos UC01 a UC12 e cinco diagramas complementares. A numeração e os títulos devem ser mantidos conforme o Apêndice C do TCC.
+> O Apêndice C detalha os casos de uso UC01 a UC12 e apresenta cinco diagramas complementares.
