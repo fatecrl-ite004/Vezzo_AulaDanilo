@@ -1543,20 +1543,73 @@ async function agendarComFeedback(pacienteId, horarioId, botao) {
   }
 
   // Mantém o comportamento atual da fila de espera.
-  const antes = getHorario(horarioId)?.status;
 
-  agendar(pacienteId, horarioId);
+  // Registra a entrada na fila no Supabase.
+  if (pacienteTemConflito(pacienteId, h.data, h.hora)) {
+    mensagemErro('Você já tem uma consulta nesse mesmo dia e horário.');
+    return;
+  }
 
-  const depois = getHorario(horarioId)?.status;
+  if (horarioJaEncerrado(h.data, h.hora)) {
+    mensagemErro('Este horário já foi encerrado.');
+    return;
+  }
 
-  if (depois && depois !== antes) {
-    mostrarToast(
-      depois === 'lotado'
-        ? 'Você entrou na fila de espera.'
-        : 'Consulta agendada.'
+  if (!alvo.supabaseId) {
+    mensagemErro('Não foi possível identificar o horário no Supabase.');
+    return;
+  }
+
+  const agendaOrigem = state.agendas.find(
+    a => a.id === h.agendaId
+  )?.supabaseId || null;
+
+  if (botao) {
+    botao.disabled = true;
+    botao.textContent = 'Entrando na fila…';
+  }
+
+  try {
+    const { data: consultaSupabaseId, error } = await supabaseClient
+      .rpc('entrar_fila_vezzo', {
+        p_horario_id: alvo.supabaseId,
+        p_agenda_origem_id: agendaOrigem
+      });
+
+    if (error) throw error;
+
+    // Atualiza também a fila no estado local.
+    agendar(pacienteId, horarioId);
+
+    const consultaLocal = state.consultas
+      .filter(c =>
+        c.pacienteId === pacienteId &&
+        c.horarioId === alvo.id &&
+        c.status === 'fila'
+      )
+      .pop();
+
+    if (consultaLocal) {
+      consultaLocal.supabaseId = consultaSupabaseId;
+    }
+
+    salvarDados();
+    mostrarToast('Você entrou na fila de espera.');
+    render();
+
+  } catch (erro) {
+    console.error('Erro ao entrar na fila:', erro);
+    mensagemErro(
+      erro.message || 'Não foi possível entrar na fila de espera.'
     );
+
+    if (botao) {
+      botao.disabled = false;
+      botao.textContent = 'Agendar';
+    }
   }
 }
+
 
 function liberarHorarioEPromover(horarioId, consultaCanceladaId){
   const h = getHorario(horarioId);
@@ -1834,8 +1887,37 @@ function confirmarCancelamentoPaciente(){
     consulta.status = 'cancelada';
     if (h.fila.length === 0 && h.pacienteId) h.status = 'ocupado';
   } else if (consulta.status === 'confirmada') {
-    liberarHorarioEPromover(h.id, consulta.id);
-  }
+  // Cancela primeiro no Supabase.
+  (async () => {
+    try {
+      if (!consulta.supabaseId) {
+        throw new Error('ID da consulta no Supabase não encontrado.');
+      }
+
+      const { error } = await supabaseClient.rpc(
+        'cancelar_consulta_vezzo',
+        { p_consulta_id: consulta.supabaseId }
+      );
+
+      if (error) throw error;
+
+      liberarHorarioEPromover(h.id, consulta.id);
+
+      // Atualiza o status local da consulta.
+      consulta.status = 'cancelada';
+
+      mostrarToast('Consulta cancelada e profissional notificado.');
+      render();
+
+    } catch (erro) {
+      console.error('Erro ao cancelar consulta:', erro);
+      mensagemErro('Não foi possível cancelar a consulta. Tente novamente.');
+      render();
+    }
+  })();
+
+  return;
+}
 
   // O cancelamento do paciente também precisa chegar ao profissional.
   notificar(consulta.pacienteId, 'cancelamento', `Sua consulta com ${prof.nome} foi cancelada.`);
@@ -1887,7 +1969,6 @@ function alternarTipoConta(tipo){
 
 
 
-
 async function carregarAgendaPacienteSupabase(profissionalLocalId) {
   try {
     const profissional = getProfissional(profissionalLocalId);
@@ -1913,32 +1994,46 @@ async function carregarAgendaPacienteSupabase(profissionalLocalId) {
 
     if (erroHorarios) throw erroHorarios;
 
-    const agendasLocais = agendas.map(a => ({
-      id: state.proximoIdAgenda++,
-      supabaseId: a.id,
-      profissionalId: profissionalLocalId,
-      nome: a.nome,
-      prioridade: a.prioridade,
-      criadaEm: a.criada_em
-    }));
+    // Reutiliza os IDs locais das agendas já carregadas.
+    const agendasLocais = agendas.map(a => {
+      const existente = state.agendas.find(
+        x => x.supabaseId === a.id
+      );
+
+      return {
+        id: existente?.id ?? state.proximoIdAgenda++,
+        supabaseId: a.id,
+        profissionalId: profissionalLocalId,
+        nome: a.nome,
+        prioridade: a.prioridade,
+        criadaEm: a.criada_em
+      };
+    });
 
     const idsAgendas = new Map(
       agendasLocais.map(a => [a.supabaseId, a.id])
     );
 
-    const horariosLocais = horarios.map(h => ({
-      id: state.proximoIdHorario++,
-      supabaseId: h.id,
-      profissionalId: profissionalLocalId,
-      agendaId: idsAgendas.get(h.agenda_id),
-      data: h.data,
-      hora: h.hora.slice(0, 5),
-      modalidade: h.modalidade,
-      status: h.status,
-      pacienteId: null,
-      fila: [],
-      filaOrigem: []
-    }));
+    // Reutiliza os IDs locais dos horários já carregados.
+    const horariosLocais = horarios.map(h => {
+      const existente = state.horarios.find(
+        x => x.supabaseId === h.id
+      );
+
+      return {
+        id: existente?.id ?? state.proximoIdHorario++,
+        supabaseId: h.id,
+        profissionalId: profissionalLocalId,
+        agendaId: idsAgendas.get(h.agenda_id),
+        data: h.data,
+        hora: h.hora.slice(0, 5),
+        modalidade: h.modalidade,
+        status: h.status,
+        pacienteId: existente?.pacienteId ?? null,
+        fila: existente?.fila ?? [],
+        filaOrigem: existente?.filaOrigem ?? []
+      };
+    });
 
     state.agendas = [
       ...state.agendas.filter(a => a.profissionalId !== profissionalLocalId),
@@ -1962,100 +2057,135 @@ async function carregarAgendaPacienteSupabase(profissionalLocalId) {
 }
 
 
-
-async function vincularConsultasAosHorariosPaciente() {
-  const pacienteId = state.usuario?.id;
-  if (!pacienteId) return;
-
-  state.consultas
-    .filter(c => c.pacienteId === pacienteId && c.horarioSupabaseId)
-    .forEach(c => {
-      const horario = state.horarios.find(
-        h => h.supabaseId === c.horarioSupabaseId
-      );
-
-      if (horario) {
-        c.horarioId = horario.id;
-
-        if (c.status === 'confirmada') {
-          horario.pacienteId = pacienteId;
-        }
-
-        if (c.status === 'fila' && !horario.fila.includes(pacienteId)) {
-          horario.fila.push(pacienteId);
-        }
-      }
-    });
-}
-
 async function carregarConsultasPacienteSupabase() {
   try {
     const pacienteId = state.usuario?.id;
-    if (!pacienteId) return;
 
-    const { data: consultas, error } = await supabaseClient
+    if (!pacienteId) {
+      throw new Error('Paciente não identificado.');
+    }
+
+    // Busca as consultas deste paciente.
+    const { data: consultas, error: erroConsultas } = await supabaseClient
       .from('consultas')
       .select('id, paciente_id, horario_id, status, alerta_faltas')
       .eq('paciente_id', pacienteId);
 
-    if (error) throw error;
-
-    state.consultas = state.consultas.filter(
-      c => c.pacienteId !== pacienteId
-    );
+    if (erroConsultas) throw erroConsultas;
 
     if (!consultas.length) {
+      state.consultas = state.consultas.filter(
+        c => c.pacienteId !== pacienteId
+      );
       salvarDados();
       return;
     }
 
-    const horariosIds = consultas.map(c => c.horario_id);
+    // Busca os horários relacionados às consultas.
+    const idsHorarios = [...new Set(consultas.map(c => c.horario_id))];
 
-    const { data: horariosBanco, error: erroHorarios } =
-      await supabaseClient
-        .from('horarios')
-        .select('id, profissional_id')
-        .in('id', horariosIds);
+    const { data: horarios, error: erroHorarios } = await supabaseClient
+      .from('horarios')
+      .select('*')
+      .in('id', idsHorarios);
 
     if (erroHorarios) throw erroHorarios;
 
-    const profissionaisIds = [
-      ...new Set(horariosBanco.map(h => h.profissional_id))
-    ];
+    // Busca as agendas relacionadas aos horários.
+    const idsAgendas = [...new Set(horarios.map(h => h.agenda_id))];
 
-    for (const profissionalSupabaseId of profissionaisIds) {
-      const profissionalLocal = state.profissionais.find(
-        p => p.supabaseId === profissionalSupabaseId
+    const { data: agendas, error: erroAgendas } = await supabaseClient
+      .from('agendas')
+      .select('*')
+      .in('id', idsAgendas);
+
+    if (erroAgendas) throw erroAgendas;
+
+    const agendasLocais = new Map();
+
+    agendas.forEach(a => {
+      let agendaLocal = state.agendas.find(
+        x => x.supabaseId === a.id
       );
 
-      if (profissionalLocal) {
-        await carregarAgendaPacienteSupabase(profissionalLocal.id);
+      if (!agendaLocal) {
+        agendaLocal = {
+          id: state.proximoIdAgenda++,
+          supabaseId: a.id,
+          profissionalId: state.profissionais.find(
+            p => p.supabaseId === horarios.find(h => h.agenda_id === a.id)?.profissional_id
+          )?.id,
+          nome: a.nome,
+          prioridade: a.prioridade,
+          criadaEm: a.criada_em
+        };
+
+        state.agendas.push(agendaLocal);
       }
-    }
 
-    for (const c of consultas) {
-      const horarioBanco = horariosBanco.find(
-        h => h.id === c.horario_id
+      agendasLocais.set(a.id, agendaLocal);
+    });
+
+    const horariosLocais = new Map();
+
+    horarios.forEach(h => {
+      let horarioLocal = state.horarios.find(
+        x => x.supabaseId === h.id
       );
 
-      const horarioLocal = state.horarios.find(
-        h => h.supabaseId === c.horario_id
+      const profissionalLocal = state.profissionais.find(
+        p => p.supabaseId === h.profissional_id
       );
 
-      if (!horarioBanco || !horarioLocal) continue;
+      if (!profissionalLocal) {
+        throw new Error('Profissional relacionado à consulta não encontrado.');
+      }
 
-      state.consultas.push({
-        id: state.proximoIdConsulta++,
+      if (!horarioLocal) {
+        horarioLocal = {
+          id: state.proximoIdHorario++,
+          supabaseId: h.id,
+          profissionalId: profissionalLocal.id,
+          agendaId: agendasLocais.get(h.agenda_id)?.id,
+          data: h.data,
+          hora: h.hora.slice(0, 5),
+          modalidade: h.modalidade,
+          status: h.status,
+          pacienteId: null,
+          fila: [],
+          filaOrigem: []
+        };
+
+        state.horarios.push(horarioLocal);
+      }
+
+      horariosLocais.set(h.id, horarioLocal);
+    });
+
+    // Monta as consultas no formato utilizado pela aplicação.
+    const consultasLocais = consultas.map(c => {
+      const horarioLocal = horariosLocais.get(c.horario_id);
+
+      if (!horarioLocal) {
+        throw new Error('Horário relacionado à consulta não encontrado.');
+      }
+
+      return {
+        id: state.consultas.find(x => x.supabaseId === c.id)?.id
+          ?? state.proximoIdConsulta++,
         supabaseId: c.id,
-        pacienteId,
+        pacienteId: pacienteId,
         horarioId: horarioLocal.id,
-        horarioSupabaseId: c.horario_id,
         status: c.status,
-        alertaFaltas: c.alerta_faltas
-      });
-    }
+        alertaFaltas: !!c.alerta_faltas
+      };
+    });
 
-    await vincularConsultasAosHorariosPaciente();
+    // Substitui somente as consultas deste paciente.
+    state.consultas = [
+      ...state.consultas.filter(c => c.pacienteId !== pacienteId),
+      ...consultasLocais
+    ];
 
     salvarDados();
 
@@ -2064,6 +2194,7 @@ async function carregarConsultasPacienteSupabase() {
     throw erro;
   }
 }
+
 
 
 
@@ -2279,6 +2410,7 @@ async function fazerLogin() {
       state.agendaAberta = false;
       abaPaciente = 'profissionais';
       await carregarProfissionaisSupabase();
+      await carregarConsultasPacienteSupabase();
 
     } else if (perfil.tipo === 'profissional') {
       const { data: profissional, error: erroProfissional } = await supabaseClient
@@ -2360,6 +2492,7 @@ async function restaurarSessaoSupabase() {
 
       abaPaciente = 'profissionais';
       await carregarProfissionaisSupabase();
+      await carregarConsultasPacienteSupabase();
       state.clinicaSelecionadaId = null;
       state.profissionalSelecionadoId = null;
       state.agendaAberta = false;
@@ -2854,7 +2987,7 @@ async function abrirAgendaProfissional() {
 
   try {
     await carregarAgendaPacienteSupabase(profissionalId);
-    render();
+render();
   } catch (erro) {
     state.agendaAberta = false;
   }
